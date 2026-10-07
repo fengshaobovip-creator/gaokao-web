@@ -10,6 +10,7 @@
  * 3. 预先算好分面统计（facets），前端筛选器直接消费，避免每次遍历 951 条。
  */
 const fs = require('fs');
+const crypto = require('crypto');
 const path = require('path');
 
 const APP = path.join(__dirname, '..', '..', 'GaokaoApp');
@@ -200,3 +201,25 @@ for (const [k, a, b] of rows) {
   console.log(`  ${k.padEnd(8)} ${String(a).padStart(4)}/${b}  ${bar} ${pct}%`);
 }
 console.log(`\n985 ${cov.tier985} · 211 ${cov.tier211} · 双一流 ${cov.tierDoubleFirstClass} · 省份 ${cov.provinces} · 城市 ${cov.cities} · 河南 ${cov.henanSchools}`);
+/* ---------------------------------------------------------------------------
+ * 资源指纹：把 app.css / app.js 的内容哈希写进 HTML 引用
+ *
+ * 不做这一步的话，GitHub Pages 会给浏览器下发长缓存的 app.js，
+ * 我们改了代码但用户看到的还是旧版（本次踩过：改了一分一段表头，
+ * 线上 fetch 已是新文件，页面却仍渲染旧文案）。
+ * 内容哈希变化即文件名变化，浏览器自然重新拉取。
+ * ------------------------------------------------------------------------- */
+const SITE = path.join(__dirname, '..');
+const sha = (rel) => crypto.createHash('sha256').update(fs.readFileSync(path.join(SITE, rel))).digest('hex').slice(0, 6);
+
+const stamp = { 'assets/app.css': sha('assets/app.css'), 'assets/app.js': sha('assets/app.js') };
+let touched = 0;
+for (const name of fs.readdirSync(SITE).filter((f) => f.endsWith('.html'))) {
+  const fp = path.join(SITE, name);
+  const before = fs.readFileSync(fp, 'utf8');
+  const after = before
+    .replace(/href="assets\/app\.css(\?v=[^"]*)?"/, `href="assets/app.css?v=${stamp['assets/app.css']}"`)
+    .replace(/src="assets\/app\.js(\?v=[^"]*)?"/, `src="assets/app.js?v=${stamp['assets/app.js']}"`);
+  if (after !== before) { fs.writeFileSync(fp, after); touched++; }
+}
+console.log(`\n资源指纹已同步：css ${stamp['assets/app.css']} · js ${stamp['assets/app.js']}（${touched} 个页面）`);
