@@ -619,21 +619,23 @@ function renderScore() {
       const bv = b.score != null ? b.score : b.scoreMin;
       return (bv || 0) - (av || 0);
     });
-    $('#scoreTbl').innerHTML = `<thead><tr><th>分数</th><th>累计人数</th><th>位次</th></tr></thead><tbody>${rows
-      .map((r) => {
-        const sc = r.score != null ? r.score : r.scoreMin;
-        const rk = r.rank != null ? r.rank : r.cumulative;
-        const cnt = r.count != null ? r.count : '';
-        return `<tr><td><b>${sc}</b></td><td>${fmt(cnt)}</td><td><b>${fmt(rk)}</b></td></tr>`;
-      })
-      .join('')}</tbody>`;
+    const rowHtml = (r) => {
+      const sc = r.score != null ? r.score : r.scoreMin;
+      const rk = r.rank != null ? r.rank : r.cum != null ? r.cum : r.cumulative;
+      const cnt = r.count != null ? r.count : '';
+      return `<tr><td><b>${sc}</b></td><td>${fmt(cnt)}</td><td><b>${fmt(rk)}</b></td>${r.note ? `<td class="note">${esc(r.note)}</td>` : ''}</tr>`;
+    };
+
+    const hasNote = rows.some((r) => r.note);
+    $('#scoreTbl').innerHTML =
+      `<thead><tr><th>分数</th><th>本分人数</th><th>累计位次</th>${hasNote ? '<th>备注</th>' : ''}</tr></thead><tbody>${rows.map(rowHtml).join('')}</tbody>`;
 
     const v = parseFloat($('#scoreIn').value);
     const box = $('#scoreRes');
     if (!v) { box.innerHTML = '<div class="empty-inline">输入分数查看对应位次</div>'; return; }
     const n = scoreNearest(subj, v);
     box.innerHTML = n
-      ? `<div class="res-box"><div class="big">${fmt(n.rank)}</div><div class="lbl">${subj === 'hist' ? '历史类' : '物理类'} 约等于此位次（对应整分 ${n.score} 分，共 ${fmt(n.raw.count != null ? n.raw.count : n.raw.cumulative)} 人）</div></div>`
+      ? `<div class="res-box"><div class="big">${fmt(n.rank)}</div><div class="lbl">${subj === 'hist' ? '历史类' : '物理类'}位次（按 ${n.score} 分计，该分 ${fmt(n.raw.count != null ? n.raw.count : 0)} 人）</div></div>`
       : '<div class="empty-inline">分数超出表格范围</div>';
   };
 
