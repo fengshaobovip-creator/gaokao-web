@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>专业详情 · 奶茶高考</title>
+<meta name="description" content="专业核心课程、就业方向、对口行业、深造竞争力与开设院校。">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+
+<header class="hd">
+  <div class="hd-in">
+    <a href="./" class="logo"><span class="logo-mark">奶</span><span>奶茶高考<span class="logo-sub"> · 河南志愿院校库</span></span></a>
+    <nav class="nav">
+      <a href="./">院校库</a>
+      <a href="majors.html" class="on">专业库</a>
+      <a href="score.html">一分一段</a>
+      <a href="about.html">数据说明</a>
+    </nav>
+  </div>
+</header>
+
+<div id="content"><div class="wrap" style="padding:60px 20px"><div class="loadbar"><i></i></div></div></div>
+
+<footer class="ft">
+  <div class="ft-in">
+    <span>奶茶高考 · 专业竞争度为定性判断，非量化就业统计</span>
+    <span><a href="about.html">数据来源与完整度</a></span>
+  </div>
+</footer>
+
+<script src="assets/app.js"></script>
+<script>
+(async function () {
+  await boot();
+  renderMajorDetail(new URLSearchParams(location.search).get('id'));
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>奶茶高考 · 河南高考志愿院校数据库</title>
+<meta name="description" content="奶茶高考 —— 面向河南考生的志愿填报参考工具。收录全国 951 所公办本科院校，含985/211/双一流层次、城市、专业设置、保研率与河南录取位次，支持多维筛选与冲稳保定位。">
+<meta name="keywords" content="河南高考,志愿填报,院校库,一分一段,985,211,双一流,冲稳保">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+
+<header class="hd">
+  <div class="hd-in">
+    <a href="./" class="logo">
+      <span class="logo-mark">奶</span>
+      <span>奶茶高考<span class="logo-sub"> · 河南志愿院校库</span></span>
+    </a>
+    <nav class="nav">
+      <a href="./" class="on">院校库</a>
+      <a href="majors.html">专业库</a>
+      <a href="score.html">一分一段</a>
+      <a href="about.html">数据说明</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <h1>全国公办本科院校数据库</h1>
+    <p>以教育部官方名单为准，覆盖全国 31 个省份的公办本科院校。层次、城市、办学者、学校类型与专业设置结构化可查，录取位次与保研率仅收录可核实数据，缺失部分明确标注「暂无」。</p>
+    <div class="hero-stats" id="hstats"></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div style="margin:-26px 0 0;position:relative;z-index:2">
+    <div class="searchbar">
+      <input id="q" placeholder="搜索院校、城市、专业、双一流学科…" autocomplete="off">
+    </div>
+  </div>
+</div>
+
+<div class="wrap main">
+  <aside class="side" id="side"><div class="empty-inline" style="padding:20px">载入中…</div></aside>
+  <main>
+    <div id="results"><div class="loadbar"><i></i></div></div>
+  </main>
+</div>
+
+<footer class="ft">
+  <div class="ft-in">
+    <span>奶茶高考 · 河南高考志愿参考工具 · 本站数据仅供参考，填报请以官方文件为准</span>
+    <span><a href="about.html">数据来源与完整度</a> · <a href="https://gaokao.chsi.com.cn/" target="_blank" rel="noopener">教育部阳光高考</a></span>
+  </div>
+</footer>
+
+<script src="assets/app.js"></script>
+<script>
+(async function () {
+  await boot();
+
+  // 顶部统计
+  const c = STATE.coverage;
+  document.getElementById('hstats').innerHTML = [
+    [c.total, '所公办本科'],
+    [c.tierDoubleFirstClass, '所双一流'],
+    [c.provinces, '个省份'],
+    [c.cities, '座城市'],
+    [c.henanSchools, '所河南院校'],
+  ].map(([n, l]) => `<div class="hstat"><b>${n}</b><span>${l}</span></div>`).join('');
+
+  readFiltersFromUrl();
+  document.getElementById('q').value = filters.q;
+
+  renderSidebar();
+  renderResults();
+
+  const qEl = document.getElementById('q');
+  let tm;
+  qEl.addEventListener('input', (e) => {
+    filters.q = e.target.value.trim();
+    filters.page = 1;
+    clearTimeout(tm);
+    tm = setTimeout(() => { renderResults(); syncUrl(); }, 250);
+  });
+
+  // 事件委托：筛选 chip
+  document.getElementById('side').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-tier],[data-prov],[data-city],[data-cat],[data-affil],[data-clear]');
+    if (!b) return;
+    const pairs = [['tier', filters.tiers], ['prov', filters.provinces], ['city', filters.cities], ['cat', filters.cats], ['affil', filters.affils]];
+    for (const [attr, set] of pairs) {
+      if (b.hasAttribute('data-' + attr)) {
+        const v = b.getAttribute('data-' + attr);
+        set.has(v) ? set.delete(v) : set.add(v);
+        break;
+      }
+    }
+    if (b.dataset.clear) filters[b.dataset.clear].clear();
+    filters.page = 1;
+    renderSidebar(); renderResults(); syncUrl();
+  });
+
+  // 已选条件 chip
+  $('#results').addEventListener('click', (e) => {
+    const rm = e.target.closest('[data-rm-kind]');
+    if (rm) {
+      const kind = rm.dataset.rmKind, val = rm.dataset.rmVal;
+      if (kind === 'q') { filters.q = ''; document.getElementById('q').value = ''; }
+      else if (filters[kind]) filters[kind].delete(val);
+      filters.page = 1;
+      renderSidebar(); renderResults(); syncUrl();
+      return;
+    }
+    if (e.target.closest('[data-clear-all]')) {
+      filters.provinces.clear(); filters.cities.clear(); filters.cats.clear(); filters.affils.clear(); filters.tiers.clear();
+      filters.q = ''; document.getElementById('q').value = ''; filters.page = 1;
+      renderSidebar(); renderResults(); syncUrl();
+      return;
+    }
+    const card = e.target.closest('.card');
+    if (card) location.href = 'school.html?id=' + encodeURIComponent(card.dataset.id);
+  });
+})();
+</script>
+</body>
+</html>
